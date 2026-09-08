@@ -33,6 +33,7 @@ pub mod models;
 pub mod operations;
 pub mod realm;
 pub mod safety;
+pub mod sqlite;
 
 pub use error::{Error, Result};
 pub use realm::RealmDatabase;
