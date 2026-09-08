@@ -19,7 +19,7 @@
 //! let manager = BackupManager::new(db.path())?;
 //!
 //! // 创建备份
-//! let backup = manager.create_backup(&BackupStrategy::default())?;
+//! let mut backup = manager.create_backup(&BackupStrategy::default())?;
 //!
 //! // 验证备份
 //! backup.verify()?;

@@ -4,8 +4,8 @@
 
 use crate::error::{Error, Result};
 use crate::realm::RealmConfig;
-use log::{debug, info, warn};
-use std::path::{Path, PathBuf};
+use log::{debug, info};
+use std::path::Path;
 
 /// Realm 数据库连接
 ///

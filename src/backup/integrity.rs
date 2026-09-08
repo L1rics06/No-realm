@@ -1,7 +1,7 @@
 //! 备份完整性验证
 
 use crate::backup::BackupMetadata;
-use crate::error::{Error, Result};
+use crate::error::Result;
 use log::{debug, warn};
 use std::fs;
 use std::path::Path;
