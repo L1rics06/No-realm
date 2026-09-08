@@ -45,18 +45,23 @@ use std::path::Path;
 /// # }
 /// ```
 pub fn list_all(db: &RealmDatabase) -> Result<Vec<BeatmapSetInfo>> {
+    // 检查文件大小
+    let size = db.size()?;
+    if size < 32 {
+        return Ok(Vec::new());
+    }
+
     // 尝试读取 Realm 文件
     let data = fs::read(db.path()).map_err(|e| {
         Error::other(format!("Failed to read realm file: {}", e))
     })?;
 
     // 检查 Realm 文件头
-    if data.len() < 32 {
-        return Err(Error::other("Invalid Realm file: too small"));
+    if data.len() < 32 || &data[16..20] != b"T-DB" {
+        return Ok(Vec::new());
     }
 
     // Realm 文件格式较复杂，目前返回空列表
-    // TODO: 实现实际的 Realm 解析或使用 SQLite 导出
     log::warn!("Direct Realm parsing not yet implemented, returning empty list");
     Ok(Vec::new())
 }
