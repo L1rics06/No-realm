@@ -13,6 +13,10 @@ pub enum Error {
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
 
+    /// SQLite 错误
+    #[error("SQLite error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+
     /// Realm 数据库错误
     #[error("Realm database error: {message}\n数据库错误：{message}")]
     Realm {

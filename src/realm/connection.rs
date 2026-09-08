@@ -3,7 +3,7 @@
 //! 使用 realm-codec 进行底层文件操作。
 
 use crate::error::{Error, Result};
-use crate::realm::RealmConfig;
+use crate::realm::{MutationBuilder, QueryBuilder, RealmConfig};
 use log::{debug, info};
 use std::path::Path;
 
@@ -110,6 +110,55 @@ impl RealmDatabase {
     pub fn close(self) {
         info!("Closing Realm database: {:?}", self.config.path);
         drop(self);
+    }
+
+    /// 创建查询构建器
+    ///
+    /// # 示例
+    ///
+    /// ```no_run
+    /// # use no_realm::RealmDatabase;
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let db = RealmDatabase::open("/path/to/client.realm")?;
+    /// let query = db.query()?;
+    ///
+    /// // 查询所有皮肤
+    /// let skins = query.query_skins()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn query(&self) -> Result<QueryBuilder> {
+        QueryBuilder::new(self)
+    }
+
+    /// 创建变更构建器
+    ///
+    /// ⚠️ **安全警告**: 应该通过 `safety::safe_operation` 使用，而不是直接调用。
+    ///
+    /// # 示例
+    ///
+    /// ```no_run
+    /// # use no_realm::RealmDatabase;
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let db = RealmDatabase::open("/path/to/client.realm")?;
+    ///
+    /// // ❌ 不推荐：直接使用
+    /// // let mut mutation = db.mutation()?;
+    ///
+    /// // ✅ 推荐：通过 safe_operation 使用
+    /// // no_realm::safety::safe_operation(&db, |db| {
+    /// //     let mut mutation = db.mutation()?;
+    /// //     mutation.insert_skin(&skin)?;
+    /// //     Ok(())
+    /// // })?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn mutation(&self) -> Result<MutationBuilder> {
+        if self.is_read_only() {
+            return Err(Error::other("Cannot create mutation on read-only database"));
+        }
+        MutationBuilder::new(self)
     }
 }
 

@@ -6,9 +6,13 @@ use crate::error::{Error, Result};
 use std::path::{Path, PathBuf};
 
 mod connection;
+mod mutation;
+mod query;
 pub mod reader;
 
 pub use connection::RealmDatabase;
+pub use mutation::MutationBuilder;
+pub use query::{DatabaseStats, QueryBuilder};
 pub use reader::RealmReader;
 
 /// Realm 数据库配置

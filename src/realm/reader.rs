@@ -174,17 +174,21 @@ mod tests {
 
     #[test]
     fn test_find_strings() {
+        // 创建一个最小的有效 Realm 文件头
         let mut temp = NamedTempFile::new().unwrap();
-        // 写入带字符串的数据
+
+        // 写入 Realm 文件头（简化版本）
+        let mut header = vec![0u8; 32];
+        header[0] = 24; // file_format_version
+        header[16..20].copy_from_slice(b"T-DB"); // Realm 标记
+        temp.write_all(&header).unwrap();
+
+        // 添加一些测试字符串
         temp.write_all(b"\x00\x00Hello\x00World\x00Test\x00\x00").unwrap();
         temp.flush().unwrap();
 
-        let mut reader = RealmReader::open(temp.path()).unwrap_or_else(|_| {
-            // 如果不是有效的 Realm 文件，跳过测试
-            panic!("Not a valid Realm file for testing");
-        });
-
-        // 这个测试可能失败，因为测试文件不是有效的 Realm 格式
+        let result = RealmReader::open(temp.path());
+        assert!(result.is_ok(), "Should be able to open test Realm file");
     }
 }
 
