@@ -1,0 +1,49 @@
+[package]
+name = "no-realm"
+version = "0.1.0"
+edition = "2021"
+authors = ["L1rics"]
+license = "MIT"
+description = "A safe and easy-to-use library for reading and modifying osu!lazer Realm database"
+repository = "https://github.com/L1rics/no-realm"
+keywords = ["osu", "lazer", "realm", "database"]
+categories = ["database", "game-development"]
+
+[lib]
+name = "no_realm"
+path = "src/lib.rs"
+
+[dependencies]
+# Realm 数据库访问
+realm-codec = "0.1"
+
+# 错误处理
+thiserror = "2.0"
+anyhow = "1.0"
+
+# 序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# UUID 支持
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# 时间处理
+chrono = { version = "0.4", features = ["serde"] }
+
+# 哈希计算
+sha2 = "0.10"
+
+# 文件操作
+walkdir = "2.0"
+fs_extra = "1.3"
+
+# 日志
+log = "0.4"
+
+[dev-dependencies]
+# 测试框架
+pretty_assertions = "1.4"
+tempfile = "3.0"
+test-case = "3.0"
+env_logger = "0.11"
