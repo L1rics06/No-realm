@@ -1,4 +1,4 @@
-use no_realm::RealmDatabase;
+use no_realm::{RealmDatabase, RealmReader};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
@@ -21,9 +21,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   Size: {} bytes", db.size()?);
     println!("   Read-only: {}", db.is_read_only());
 
+    // 尝试使用 RealmReader
+    println!("\nReading Realm file format...");
+    let mut reader = RealmReader::open(&db_path)?;
+    println!("   File format version: {}", reader.file_format_version());
+
     // 尝试列出 beatmaps
     println!("\nQuerying beatmaps...");
-    let beatmaps = no_realm::operations::beatmap::list_all(&db)?;
+    let beatmaps = reader.query_beatmap_sets()?;
     println!("Found {} beatmap sets", beatmaps.len());
 
     Ok(())

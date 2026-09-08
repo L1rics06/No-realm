@@ -36,7 +36,7 @@ pub mod safety;
 pub mod sqlite;
 
 pub use error::{Error, Result};
-pub use realm::RealmDatabase;
+pub use realm::{RealmDatabase, RealmReader};
 
 /// 库的版本号
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

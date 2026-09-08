@@ -6,8 +6,10 @@ use crate::error::{Error, Result};
 use std::path::{Path, PathBuf};
 
 mod connection;
+pub mod reader;
 
 pub use connection::RealmDatabase;
+pub use reader::RealmReader;
 
 /// Realm 数据库配置
 #[derive(Debug, Clone)]
