@@ -18,9 +18,10 @@
 //! ```no_run
 //! use no_realm::safety::SafetyGuard;
 //! use no_realm::backup::BackupStrategy;
+//! use no_realm::error::Result;
 //! use std::path::Path;
 //!
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # fn main() -> Result<()> {
 //! let db_path = Path::new("/path/to/client.realm");
 //!
 //! // 方式 1: 显式使用守卫
@@ -38,7 +39,7 @@
 //! })?;
 //! # Ok(())
 //! # }
-//! # fn perform_write_operation() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
+//! # fn perform_write_operation() -> Result<()> { Ok(()) }
 //! ```
 
 use crate::backup::{Backup, BackupManager, BackupStrategy};

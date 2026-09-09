@@ -1,12 +1,25 @@
 //! 收藏夹操作模块
 //!
 //! 提供收藏夹的完整 CRUD 操作。
+//!
+//! ## 实现状态
+//!
+//! ⚠️ **当前限制**: Collection 的创建和删除需要完整的 Realm 编解码器。
+//! Realm 使用自定义的二进制格式，不是标准的 SQLite。
+//!
+//! 当前实现的功能：
+//! - ✅ 列出所有 Collection（读取）
+//! - ✅ 根据 ID/名称查询（读取）
+//! - ⚠️ 创建/删除（需要 realm-codec 支持）
+//!
+//! ## 未来实现
+//!
+//! 需要集成 Realm C++ SDK 或实现完整的二进制编解码器。
 
-use crate::backup::BackupStrategy;
 use crate::error::{Error, Result};
 use crate::models::BeatmapCollection;
+use crate::process;
 use crate::realm::RealmDatabase;
-use crate::safety::safe_operation;
 use uuid::Uuid;
 
 /// 列出所有收藏夹
@@ -39,26 +52,44 @@ pub fn get_by_name(_db: &RealmDatabase, _name: &str) -> Result<Option<BeatmapCol
 /// # 返回
 ///
 /// 创建的收藏夹信息
-pub fn create(db: &RealmDatabase, name: &str) -> Result<BeatmapCollection> {
-    safe_operation(db.path(), &BackupStrategy::default(), |_path| {
-        // TODO: 实现创建逻辑
-        Err(Error::other(format!(
-            "Create collection not yet implemented: {}",
+///
+/// # 错误
+///
+/// - osu!lazer 正在运行
+/// - **当前版本**: 需要完整的 Realm 编解码器支持
+///
+/// # 实现状态
+///
+/// ⚠️ **未完成**: 需要实现 Realm 二进制格式编码。
+/// Realm 不是标准 SQLite，需要特殊的编解码器。
+pub fn create(_db: &RealmDatabase, name: &str) -> Result<BeatmapCollection> {
+    // 检查游戏进程
+    process::ensure_osu_not_running()?;
+
+    // 当前版本暂不支持
+    Err(Error::UnsupportedOperation {
+        operation: format!(
+            "create_collection('{}') - Requires Realm codec implementation",
             name
-        )))
+        ),
     })
 }
 
 /// 重命名收藏夹
 ///
 /// **安全操作**: 在备份保护下执行。
-pub fn rename(db: &RealmDatabase, id: &Uuid, new_name: &str) -> Result<()> {
-    safe_operation(db.path(), &BackupStrategy::default(), |_path| {
-        // TODO: 实现重命名逻辑
-        Err(Error::other(format!(
-            "Rename collection not yet implemented: {} -> {}",
+///
+/// # 实现状态
+///
+/// ⚠️ **未完成**: 需要 Realm 编解码器支持。
+pub fn rename(_db: &RealmDatabase, id: &Uuid, new_name: &str) -> Result<()> {
+    process::ensure_osu_not_running()?;
+
+    Err(Error::UnsupportedOperation {
+        operation: format!(
+            "rename_collection({}, '{}') - Requires Realm codec implementation",
             id, new_name
-        )))
+        ),
     })
 }
 
@@ -71,39 +102,66 @@ pub fn rename(db: &RealmDatabase, id: &Uuid, new_name: &str) -> Result<()> {
 /// - `db` - 数据库连接
 /// - `collection_id` - 收藏夹 ID
 /// - `beatmap_md5` - Beatmap 的 MD5 哈希
-pub fn add_beatmap(db: &RealmDatabase, collection_id: &Uuid, beatmap_md5: &str) -> Result<()> {
-    safe_operation(db.path(), &BackupStrategy::default(), |_path| {
-        // TODO: 实现添加逻辑
-        Err(Error::other(format!(
-            "Add beatmap to collection not yet implemented: {} -> {}",
+///
+/// # 实现状态
+///
+/// ⚠️ **未完成**: 需要 Realm 编解码器支持。
+pub fn add_beatmap(_db: &RealmDatabase, collection_id: &Uuid, beatmap_md5: &str) -> Result<()> {
+    process::ensure_osu_not_running()?;
+
+    Err(Error::UnsupportedOperation {
+        operation: format!(
+            "add_beatmap_to_collection({}, '{}') - Requires Realm codec implementation",
             collection_id, beatmap_md5
-        )))
+        ),
     })
 }
 
 /// 从收藏夹移除 Beatmap
 ///
 /// **安全操作**: 在备份保护下执行。
-pub fn remove_beatmap(db: &RealmDatabase, collection_id: &Uuid, beatmap_md5: &str) -> Result<()> {
-    safe_operation(db.path(), &BackupStrategy::default(), |_path| {
-        // TODO: 实现移除逻辑
-        Err(Error::other(format!(
-            "Remove beatmap from collection not yet implemented: {} -> {}",
+///
+/// # 实现状态
+///
+/// ⚠️ **未完成**: 需要 Realm 编解码器支持。
+pub fn remove_beatmap(_db: &RealmDatabase, collection_id: &Uuid, beatmap_md5: &str) -> Result<()> {
+    process::ensure_osu_not_running()?;
+
+    Err(Error::UnsupportedOperation {
+        operation: format!(
+            "remove_beatmap_from_collection({}, '{}') - Requires Realm codec implementation",
             collection_id, beatmap_md5
-        )))
+        ),
     })
 }
 
 /// 删除收藏夹
 ///
 /// **安全操作**: 在备份保护下执行。
-pub fn delete(db: &RealmDatabase, id: &Uuid) -> Result<()> {
-    safe_operation(db.path(), &BackupStrategy::default(), |_path| {
-        // TODO: 实现删除逻辑
-        Err(Error::other(format!(
-            "Delete collection not yet implemented: {}",
+///
+/// # 参数
+///
+/// - `db` - 数据库连接
+/// - `id` - 收藏夹 ID
+///
+/// # 错误
+///
+/// - osu!lazer 正在运行
+/// - **当前版本**: 需要完整的 Realm 编解码器支持
+///
+/// # 实现状态
+///
+/// ⚠️ **未完成**: 需要实现 Realm 二进制格式操作。
+pub fn delete(_db: &RealmDatabase, id: &Uuid) -> Result<()> {
+    // 检查游戏进程
+    process::ensure_osu_not_running()?;
+
+    // 当前版本暂不支持
+    Err(Error::UnsupportedOperation {
+        operation: format!(
+            "delete_collection({}) - Requires Realm codec implementation",
             id
-        )))
+        ),
     })
 }
 

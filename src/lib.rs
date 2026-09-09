@@ -31,6 +31,7 @@ pub mod error;
 pub mod hash;
 pub mod models;
 pub mod operations;
+pub mod process;
 pub mod realm;
 pub mod safety;
 pub mod sqlite;
