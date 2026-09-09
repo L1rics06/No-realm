@@ -4,19 +4,13 @@
 
 use crate::error::{Error, Result};
 use crate::models::{BeatmapSetInfo, BeatmapInfo, BeatmapMetadata, RealmFile};
+use crate::realm::format::{RealmHeader, FormatVersion};
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 use uuid::Uuid;
-
-/// Realm 文件头
-#[derive(Debug)]
-pub struct RealmHeader {
-    pub file_format_version: u8,
-    pub db_version: u64,
-}
 
 /// Realm Schema 信息
 #[derive(Debug, Clone)]
@@ -55,31 +49,30 @@ impl RealmReader {
         Ok(Self { file, header })
     }
 
-    /// 读取 Realm 文件头
+    /// 读取 Realm 文件头（使用新的 format 模块）
     fn read_header(file: &mut File) -> Result<RealmHeader> {
         file.seek(SeekFrom::Start(0))?;
 
-        let mut buffer = [0u8; 32];
+        let mut buffer = vec![0u8; 24];
         file.read_exact(&mut buffer)?;
 
-        // 检查 "T-DB" 标记
-        if &buffer[16..20] != b"T-DB" {
-            return Err(Error::other("Invalid Realm file: missing T-DB marker"));
-        }
-
-        // 解析版本信息
-        let file_format_version = buffer[0];
-        let db_version = u64::from_le_bytes(buffer[8..16].try_into().unwrap());
-
-        Ok(RealmHeader {
-            file_format_version,
-            db_version,
-        })
+        // 使用 format::header 模块解析并验证
+        RealmHeader::parse(&buffer)
     }
 
     /// 获取文件格式版本
-    pub fn file_format_version(&self) -> u8 {
+    pub fn file_format_version(&self) -> u16 {
         self.header.file_format_version
+    }
+
+    /// 获取格式版本枚举
+    pub fn format_version(&self) -> FormatVersion {
+        self.header.version()
+    }
+
+    /// 获取 Realm 头部引用
+    pub fn header(&self) -> &RealmHeader {
+        &self.header
     }
 
     /// 读取所有文件内容
@@ -177,10 +170,14 @@ mod tests {
         // 创建一个最小的有效 Realm 文件头
         let mut temp = NamedTempFile::new().unwrap();
 
-        // 写入 Realm 文件头（简化版本）
-        let mut header = vec![0u8; 32];
-        header[0] = 24; // file_format_version
-        header[16..20].copy_from_slice(b"T-DB"); // Realm 标记
+        // 写入正确的 24 字节 Realm 文件头
+        let mut header = Vec::new();
+        header.extend_from_slice(&0x1000u64.to_le_bytes()); // top_ref_0
+        header.extend_from_slice(&0x2000u64.to_le_bytes()); // top_ref_1
+        header.extend_from_slice(b"T-DB");                   // magic
+        header.extend_from_slice(&24u16.to_le_bytes());      // version 24
+        header.push(0);                                       // reserved
+        header.push(0);                                       // flags
         temp.write_all(&header).unwrap();
 
         // 添加一些测试字符串
@@ -189,6 +186,10 @@ mod tests {
 
         let result = RealmReader::open(temp.path());
         assert!(result.is_ok(), "Should be able to open test Realm file");
+
+        let reader = result.unwrap();
+        assert_eq!(reader.file_format_version(), 24);
+        assert_eq!(reader.format_version(), FormatVersion::Modern24);
     }
 }
 

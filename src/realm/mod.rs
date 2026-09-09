@@ -9,11 +9,13 @@ mod connection;
 mod mutation;
 mod query;
 pub mod reader;
+pub mod format;
 
 pub use connection::RealmDatabase;
 pub use mutation::MutationBuilder;
 pub use query::{DatabaseStats, QueryBuilder};
 pub use reader::RealmReader;
+pub use format::{RealmHeader, FormatVersion};
 
 /// Realm 数据库配置
 #[derive(Debug, Clone)]

@@ -162,6 +162,13 @@ impl Error {
             message: message.into(),
         }
     }
+
+    /// 创建一个数据库损坏错误
+    pub fn database_corrupted<S: Into<String>>(reason: S) -> Self {
+        Self::DatabaseCorrupted {
+            reason: reason.into(),
+        }
+    }
 }
 
 #[cfg(test)]

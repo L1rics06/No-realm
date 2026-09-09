@@ -18,6 +18,10 @@ path = "src/lib.rs"
 realm-codec = "0.1"
 rusqlite = { version = "0.32", features = ["bundled"] }
 
+# 二进制解析
+binrw = "0.14"
+byteorder = "1.5"
+
 # 错误处理
 thiserror = "2.0"
 anyhow = "1.0"
