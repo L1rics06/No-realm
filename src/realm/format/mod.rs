@@ -7,11 +7,13 @@
 pub mod header;
 pub mod types;
 pub mod array;
+pub mod schema;
 pub mod deserializer;
 pub mod serializer;
 
 pub use header::{RealmHeader, FormatVersion};
 pub use types::{RealmRef, TaggedValue, RefOrTagged};
 pub use array::{ArrayHeader, ArrayView};
-pub use deserializer::{Deserializer, RealmObject, Value, FieldType, Schema, TableDef, FieldDef};
+pub use schema::{Schema, TableDef, ColumnDef, ColumnType};
+pub use deserializer::{Deserializer, RealmObject, Value};
 pub use serializer::Serializer;

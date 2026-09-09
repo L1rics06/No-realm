@@ -159,10 +159,10 @@ impl Serializer {
             Value::String(s) => {
                 self.write_string(s)?;
             }
-            Value::Data(bytes) => {
+            Value::Binary(bytes) => {
                 self.write_binary(bytes)?;
             }
-            Value::Date(ts) => {
+            Value::Timestamp(ts) => {
                 self.write_i64(*ts)?;
             }
             Value::Float(v) => {
@@ -175,13 +175,16 @@ impl Serializer {
                 self.buffer.extend_from_slice(bytes);
                 self.position += 16;
             }
-            Value::ObjectRef(table_key, offset) => {
+            Value::Link(_table_key, offset) => {
                 // 对象引用存储为 ref
                 self.write_u64(*offset)?;
             }
-            Value::List(items) => {
+            Value::LinkList(offsets) => {
                 // 列表需要写入数组结构
-                self.write_list(items)?;
+                self.write_array_header(offsets.len() as u32, 7, 0x40)?; // width=64, has_refs
+                for offset in offsets {
+                    self.write_u64(*offset)?;
+                }
             }
         }
 
