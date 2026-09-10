@@ -47,7 +47,8 @@ impl ArrayHeader {
         let checksum = LittleEndian::read_u32(&data[0..4]);
         let flags = data[4];
 
-        // Size is 3 bytes little-endian at positions 5-7
+        // Size is 3 bytes big-endian (MSB first) at positions 5-7
+        // byte[5] = MSB, byte[6] = middle, byte[7] = LSB
         let size = ((data[5] as u32) << 16) | ((data[6] as u32) << 8) | (data[7] as u32);
 
         Ok(ArrayHeader {
