@@ -10,7 +10,7 @@
 //! - ❌ **禁止** 创建 Beatmap
 
 use crate::error::{Error, Result};
-use crate::models::BeatmapSetInfo;
+use crate::models::{BeatmapSetInfo, BeatmapMetadata};
 use crate::realm::RealmDatabase;
 use crate::safety::safe_operation;
 use crate::backup::BackupStrategy;
@@ -45,25 +45,90 @@ use std::path::Path;
 /// # }
 /// ```
 pub fn list_all(db: &RealmDatabase) -> Result<Vec<BeatmapSetInfo>> {
+    use crate::realm::format::deserializer::{Deserializer, Value};
+
     // 检查文件大小
     let size = db.size()?;
     if size < 32 {
         return Ok(Vec::new());
     }
 
-    // 尝试读取 Realm 文件
+    // 读取 Realm 文件
     let data = fs::read(db.path()).map_err(|e| {
         Error::other(format!("Failed to read realm file: {}", e))
     })?;
 
-    // 检查 Realm 文件头
-    if data.len() < 32 || &data[16..20] != b"T-DB" {
-        return Ok(Vec::new());
+    // 解析文件头
+    let header = crate::realm::format::RealmHeader::parse(&data)?;
+
+    // 创建反序列化器
+    let deser = Deserializer::new(&data, header.active_top_ref() as usize)?;
+
+    // 读取所有 BeatmapSetInfo (table 0)
+    let objects = deser.iter_table_objects(0)?;
+
+    // 转换为 BeatmapSetInfo
+    let mut beatmap_sets = Vec::new();
+    for (_row_index, obj) in objects {
+        if let Some(beatmap_set) = object_to_beatmap_set(&obj) {
+            beatmap_sets.push(beatmap_set);
+        }
     }
 
-    // Realm 文件格式较复杂，目前返回空列表
-    log::warn!("Direct Realm parsing not yet implemented, returning empty list");
-    Ok(Vec::new())
+    Ok(beatmap_sets)
+}
+
+/// 将 RealmObject 转换为 BeatmapSetInfo
+fn object_to_beatmap_set(obj: &crate::realm::format::deserializer::RealmObject) -> Option<BeatmapSetInfo> {
+    use crate::realm::format::deserializer::Value;
+
+    // 提取 UUID (必需)
+    let id = match obj.fields.get("ID") {
+        Some(Value::Uuid(uuid)) => {
+            // 转换为 Uuid 类型
+            Uuid::from_bytes(*uuid)
+        }
+        _ => return None,
+    };
+
+    // 提取 OnlineID
+    let online_id = match obj.fields.get("OnlineID") {
+        Some(Value::Int(n)) => Some(*n),
+        _ => None,
+    };
+
+    // 提取 DateAdded
+    let date_added = match obj.fields.get("DateAdded") {
+        Some(Value::Timestamp(ts)) => {
+            // Realm timestamp 是相对于某个 epoch 的纳秒数
+            // 转换为 DateTime (简化处理)
+            chrono::DateTime::from_timestamp(*ts / 1_000_000_000, (*ts % 1_000_000_000) as u32)
+                .unwrap_or_else(|| chrono::Utc::now())
+        }
+        _ => chrono::Utc::now(),
+    };
+
+    Some(BeatmapSetInfo {
+        id,
+        online_id,
+        date_added,
+        beatmaps: Vec::new(),  // TODO: 解析 linked beatmaps
+        files: Vec::new(),     // TODO: 解析 linked files
+        metadata: BeatmapMetadata {
+            title: String::new(),
+            title_unicode: None,
+            artist: String::new(),
+            artist_unicode: None,
+            author: String::new(),
+            author_id: None,
+            source: None,
+            tags: None,
+            audio_file: String::new(),
+            background_file: None,
+        },
+        protected: false,      // TODO: 从数据库读取
+        deleted_at: None,      // TODO: 从数据库读取
+    })
 }
 
 /// 根据 ID 查询 BeatmapSet

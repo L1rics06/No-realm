@@ -111,6 +111,24 @@ impl<'a> Deserializer<'a> {
         Ok(table_root.len())
     }
 
+    /// 迭代表中的所有有效对象（跳过 NULL 和 tagged 值）
+    pub fn iter_table_objects(&self, table_key: u8) -> Result<Vec<(usize, RealmObject)>> {
+        let row_count = self.count_table_rows(table_key)?;
+        let mut objects = Vec::new();
+
+        for row_index in 0..row_count {
+            match self.read_object(table_key, row_index) {
+                Ok(obj) => objects.push((row_index, obj)),
+                Err(_) => {
+                    // 跳过 NULL 或 tagged 值
+                    continue;
+                }
+            }
+        }
+
+        Ok(objects)
+    }
+
     /// 读取表中的一个对象
     pub fn read_object(&self, table_key: u8, row_index: usize) -> Result<RealmObject> {
         let table_def = self.schema.tables.get(&table_key)
@@ -128,9 +146,16 @@ impl<'a> Deserializer<'a> {
         // 获取对象的引用
         let obj_rot = table_root.get_ref_or_tagged(row_index)?;
         let obj_ref = match obj_rot {
-            RefOrTagged::Ref(r) => r,
+            RefOrTagged::Ref(r) => {
+                // 检查 NULL 引用
+                if r.is_null() {
+                    return Err(Error::other(format!("Row {} is null (deleted or empty)", row_index)));
+                }
+                r
+            }
             RefOrTagged::Tagged(_) => {
-                return Err(Error::other(format!("Row {} is not an object", row_index)))
+                // Tagged 值通常表示空槽位或删除标记
+                return Err(Error::other(format!("Row {} is not an object (tagged value)", row_index)))
             }
         };
 
